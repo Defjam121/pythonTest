@@ -66,7 +66,7 @@ class MQTTHandler(logging.Handler):
             protocol=self.protocol, transport=self.transport)
 
 hostname = '192.168.2.142'
-topic = '/test/logging/#'
+topic = '/test/logging'
 
 # Create and configure a logger instance
 logger = logging.getLogger('')
