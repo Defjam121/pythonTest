@@ -15,19 +15,21 @@ import signal
 import time
 import socket
 import sys
+import datetime
 
 import paho.mqtt.client as mqtt
 
 ##------------------------------------------------------------------------
 ##    Variablen
 ##------------------------------------------------------------------------
-[global]
-DEBUG = False
-LOGFILE = /var/log/mqtt-gpio-trigger.log
-PINS = 17, 22
-MQTT_HOST = 10.8.0.1
-MQTT_PORT = 1883
-MQTT_TOPIC = /raw/#
+## config.cfg
+# [global]
+# DEBUG = False
+# LOGFILE = /var/log/mqtt-gpio-trigger.log
+# PINS = 17, 22
+# MQTT_HOST = 10.8.0.1
+# MQTT_PORT = 1883
+# MQTT_TOPIC = /raw/#
 # Read the config file
 #config = ConfigParser.RawConfigParser()
 #config.read("/etc/mqtt-gpio-trigger/mqtt-gpio-trigger.cfg")
@@ -40,6 +42,38 @@ MQTT_PORT = "1883"
 MQTT_TOPIC = "/test"
 #PINS = config.get("global", "pins").split(",")
 PINS = "2 3"
+
+# Location of WirinPi gpio command
+gpio_bin_location = "/usr/local/bin/gpio"
+
+# Convert the list of strings to a list of ints.
+# Also strips any whitespace padding
+PINS = map(int, PINS)
+
+# Append a column to the list of PINS. This will be used to store state
+for item in PINS:
+    PINS[PINS.index(item)] = [item, 1]
+
+
+APPNAME = "mqtt-gpio-trigger"
+PRESENCETOPIC = "clients/" + socket.getfqdn() + "/" + APPNAME + "/state"
+client_id = APPNAME + "_%d" % os.getpid()
+mqttc = mqtt.Client()
+
+LOGFORMAT = '%(asctime)-15s %(message)s'
+
+if DEBUG:
+    logging.basicConfig(filename=LOGFILE,
+                        level=logging.DEBUG,
+                        format=LOGFORMAT)
+else:
+    logging.basicConfig(filename=LOGFILE,
+                        level=logging.INFO,
+                        format=LOGFORMAT)
+
+logging.info("Starting " + APPNAME)
+logging.info("INFO MODE")
+logging.debug("DEBUG MODE")
 ##------------------------------------------------------------------------
 ##    Funktionen
 ##------------------------------------------------------------------------
@@ -185,31 +219,3 @@ def connect():
 ##------------------------------------------------------------------------
 ##    Main
 ##------------------------------------------------------------------------
-# Convert the list of strings to a list of ints.
-# Also strips any whitespace padding
-PINS = map(int, PINS)
-
-# Append a column to the list of PINS. This will be used to store state
-for item in PINS:
-    PINS[PINS.index(item)] = [item, 1]
-
-
-APPNAME = "mqtt-gpio-trigger"
-PRESENCETOPIC = "clients/" + socket.getfqdn() + "/" + APPNAME + "/state"
-client_id = APPNAME + "_%d" % os.getpid()
-mqttc = mosquitto.Mosquitto(client_id)
-
-LOGFORMAT = '%(asctime)-15s %(message)s'
-
-if DEBUG:
-    logging.basicConfig(filename=LOGFILE,
-                        level=logging.DEBUG,
-                        format=LOGFORMAT)
-else:
-    logging.basicConfig(filename=LOGFILE,
-                        level=logging.INFO,
-                        format=LOGFORMAT)
-
-logging.info("Starting " + APPNAME)
-logging.info("INFO MODE")
-logging.debug("DEBUG MODE")
